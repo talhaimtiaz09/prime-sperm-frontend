@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Motilitycapture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+
+
+<style>
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+
+        opacity: 1;
+
+    }
+
+    .container {
+        max-width: 200px;
+        margin: 500px;
+        padding: 150px;
+    }
+
+    .video-container {
+        display: flex;
+        flex-direction: column;
+        /* Stack items vertically */
+        align-items: center;
+        /* Center items horizontally */
+        gap: 20px;
+        /* Adjust spacing between items */
+    }
+
+    video {
+        width: 50%;
+        max-width: 50px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        background-color: #000;
+        padding-top: 400;
+    }
+
+    .options-panel {
+        position: absolute;
+        top: 50%;
+        right: 20px;
+        /* Adjust distance from the right */
+        transform: translateY(-50%);
+        width: 300px;
+        /* Adjust the width as needed */
+        padding: 16px;
+        background-color: #fff;
+        /* Adjust the background color */
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .options-panel form {
+        width: 100%;
+    }
+
+    .options-panel input[type="submit"] {
+        width: calc(100% - 4px);
+        /* Adjust submit button width */
+        margin-top: 10px;
+    }
+
+    .panel {
+        /* position: relative; */
+        /* left: 20px;
+            top: 52%; */
+        /* transform: translateY(-50%);
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-height: 80%;
+            overflow-y: auto;
+            z-index: 2; */
+    }
+
+    .button {
+        display: inline-block;
+        background-color: #ffea00;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+        text-align: center;
+    }
+
+    .button:hover {
+        background-color: #615902;
+    }
+
+    #goBackButton {
+        position: fixed;
+        top: 10px;
+        left: 20px;
+        background-color: #ff00ff;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        z-index: 9999;
+    }
+
+    #goBackButton:hover {
+        background-color: #b30071;
+    }
+
+    .file-input-container {
+        /* position: relative; */
+        overflow: hidden;
+        display: inline-block;
+    }
+
+    .file-input-container input[type="file"] {
+        position: absolute;
+        font-size: 100px;
+        opacity: 0;
+        right: 0;
+        top: 0;
+    }
+
+    .range-container label {
+        display: block;
+        margin-bottom: 2px;
+        margin-top: 10px;
+        font-weight: bold;
+        font-size: 16px;
+        color: #333;
+    }
+
+    /* .range-container input[type="number"] {
+        width: 100px;
+        padding: 8px;
+        margin-bottom: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        font-size: 14px;
+    } */
+
+    #clipButton {
+        margin-right: 10px;
+        margin-top: 10px;
+        background-color: #28a745;
+        color: #fff;
+    }
+
+    #clipButton:hover {
+        background-color: #218838;
+    }
+
+    #captureImageButton {
+        margin-left: 0px;
+        margin-bottom: 10px;
+        background-color: #dc3545;
+        color: #fff;
+    }
+
+    #captureImageButton:hover {
+        background-color: #c82333;
+    }
+
+    .range-container {
+        margin-bottom: 10px;
+    }
+
+    .range-container label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .range-container input[type="range"] {
+        width: calc(100% - 40px);
+    }
+
+    .range-container output {
+        display: inline-block;
+        width: 40px;
+        margin-left: 10px;
+    }
+
+
+
+    .selection {
+        position: absolute;
+        top: 0;
+        /* Adjust as needed */
+        left: 0;
+        /* Adjust as needed */
+        width: 100px;
+        /* Adjust as needed */
+        height: 100px;
+        /* Adjust as needed */
+        border: 2px dashed red;
+        pointer-events: none;
+        z-index: 9999;
+        /* Ensure it's above other content */
+        display: none;
+        /* Ensure it's visible */
+    }
+
+
+    .frame-container {
+        margin-top: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    .frame-container label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .frame-container select,
+    .frame-container input[type="number"] {
+        width: calc(50% - 5px);
+        padding: 5px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    .coordinate-container {
+        margin-top: 10px;
+    }
+
+    body {
+        background-color: #f4f4f4; 
+
+
+    }
+</style>
+
+<body class="relative">
+    <script>
+        window.client_api = "<%= client_api %>";
+        window.server_api = "<%= server_api %>";
+        // const client_api = window.client_api;
+        const server_api = window.server_api;
+      </script>
+    <div class="flex justify-end gap-x-2 py-4 overflow-y-scroll  ">
+
+
+
+        <div class="w-full p-6 fixed">
+            <div class=" panel">
+                <h1 class="text-lg font-bold ">Options</h1>
+
+                <div class="">
+                    <form action="http://primeandrocare.com/motility.php" method="post" enctype="multipart/form-data"
+                        name="addroom" class="width-100 ">
+                        <div class="flex gap-x-2 items-center">
+
+
+                            <div class="">
+                                <button id="uploadBtn"
+                                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md mr-2">
+                                    Upload Video
+                                </button>
+                                <button id="processBtn"
+                                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md">
+                                    Process Video
+                                </button>
+                                <!-- <button id="detectCameraBtn"
+                                class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full">Detect
+                                Camera</button> -->
+                
+                
+                            </div>
+
+                            <input type="hidden" name="type" value="MOTILITY" required>
+                            <div class="">
+
+                                <label>CONCENTRATION</label>
+                                <input id="totalCellsValue" type="text" name="total"
+                                    class="w-42 border rounded-md p-2 mb-2" placeholder="Total Concentration" />
+                            </div>
+
+
+                            <!--------------------------------------------------------------------  VSL   -------------------------------------------------------------------------->
+                            <div class="hidden">
+
+                            <div >
+
+
+                                <label>VSL A</label>
+
+                                <input id="vsl1sA" type="text" name="vsla" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VSL 0 Sec" />
+                                <input id="vsl3sA" type="text" name="vsla1" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VSL 2 Sec" />
+
+                            </div>
+                            <div>
+
+
+                                <label>VSL B</label>
+
+                                <input id="vsl1sB" type="text" name="vslb" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VSL 0 Sec" />
+                                <input id="vsl3sB" type="text" name="vslb1" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VSL 2 Sec" />
+                            </div>
+                            <div>
+
+
+                                <label>VSL C</label>
+
+                                <input id="vsl1sC" type="text" name="vslc" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VSL 0 Sec" />
+                                <input id="vsl3sC" type="text" name="vslc1" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VSL 2 Sec" />
+
+                            </div>
+
+                            <div>
+
+
+                                <label>VSL D</label>
+
+                                <input id="vsl1sD" type="text" name="vsld" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VSL 0 Sec" />
+                                <input id="vsl3sD" type="text" name="vsld1" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VSL 2 Sec" />
+
+
+
+                            </div>
+                            <!--------------------------------------------------------------------  VCL   -------------------------------------------------------------------------->
+
+                            <div>
+
+                                <label>VCL A</label>
+
+                                <input id="vcl1sA" type="text" name="vcla" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VCL 0 Sec" />
+                                <input id="vcl3sA" type="text" name="vcla1" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VCL 2 Sec" />
+                            </div>
+                            <div>
+
+                                <div>
+
+                                    <label>VCL B</label>
+
+                                    <input id="vcl1sB" type="text" name="vclb" class="w-full border rounded-md p-2 mb-2"
+                                        placeholder="VSL 0 Sec" />
+                                    <input id="vcl3sB" type="text" name="vclb1"
+                                        class="w-full border rounded-md p-2 mb-2" placeholder="VCL 2 Sec" />
+                                </div>
+                            </div>
+                            <div>
+
+                                <label>VCL C</label>
+
+                                <input id="vcl1sC" type="text" name="vclc" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VSL 0 Sec" />
+                                <input id="vcl3sC" type="text" name="vclc1" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VCL 2 Sec" />
+
+                            </div>
+
+                            <div>
+
+
+                                <label>VCL D</label>
+
+                                <input id="vcl1sD" type="text" name="vcld" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VCL 0 Sec" />
+                                <input id="vcl3sD" type="text" name="vcld1" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VCL 2 Sec" />
+
+                                <!--------------------------------------------------------------------  VAC   -------------------------------------------------------------------------->
+                            </div>
+                            <div>
+
+
+                                <label>VAC A</label>
+
+                                <input id="vap1sA" type="text" name="vaca" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VAC 0 Sec" />
+                                <input id="vap3sA" type="text" name="vaca1" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VAC 2 Sec" />
+
+                            </div>
+                            <div>
+
+
+                                <label>VAC B</label>
+
+                                <input id="vap1sB" type="text" name="vacb" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VAC 0 Sec" />
+                                <input id="vap3sB" type="text" name="vacb1" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VAC 2 Sec" />
+
+                            </div>
+                            <div>
+
+                                <label>VAC C</label>
+
+                                <input id="vap1sC" type="text" name="vacc" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VAC 0 Sec" />
+                                <input id="vap3sC" type="text" name="vacc1" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VAC 2 Sec" />
+
+                            </div>
+                            <div>
+
+
+                                <label>VAC D</label>
+
+                                <input id="vap1sD" type="text" name="vacd" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VAC 0 Sec" />
+                                <input id="vap3sD" type="text" name="vacd1" class="w-full border rounded-md p-2 mb-2"
+                                    placeholder="VAC 2 Sec" />
+                            </div>
+
+
+                            </div>
+
+                            <!----   <label>MOTILTIY </label>-->
+
+                            <div class="flex gap-x-2 items-center">
+                              
+                                    
+                                    
+                                    
+                                   
+                                    <Label>Percentage</Label>
+                                    <input id="A" type="text" name="high" class="w-32 border rounded-md p-2 mb-2"
+                                        placeholder="A" />
+                                        <input id="B" type="text" name="medium" class="w-32 border rounded-md p-2 mb-2"
+                                            placeholder="B" />
+                                        
+                                    <input id="C" type="text" name="low" class="w-32 border rounded-md p-2 mb-2"
+                                        placeholder="C" />
+
+
+                                    <input id="D" type="text" name="dead" class="w-32 border rounded-md p-2 mb-2"
+                                        placeholder="D" />
+
+                                        
+                                        <input type="submit" id="navigateButton"
+                                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full"
+                                        id="navigateButton" name="ADD" value="ADD">
+                                        <input type="submit" id="navigateButton"
+                                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full"
+                                        name="REPORT" value="REPORT">
+                                    </div>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+            <div class="flex gap-x-2 items-start">
+
+                <h1 class="text-md font-bold mb-4">Video Display:
+                </h1>
+                    <p id="display"></p>
+            </div>
+           
+
+
+            <!-- <video id="uploadedVideo" class="w-full hidden" controls>
+                <source id="videoSource" type="video/mp4" />
+                Your browser does not support the video tag.
+            </video> -->
+
+
+            <div id="selection" class="selection"></div>
+
+            <!-- <img id="imgSperm" class="img-sperm w-full " src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSlGArSue-SnOQjyKa6z1hfD7Kcf5LvSYhKPg&s"></img> -->
+            <img id="imgSperm" class="img-sperm w-2/3 aspect-video " ></img>
+
+
+
+        </div>
+        <!-- Left side: Video display -->
+        <div class="panel py-10 w-1/5 p-4 border shadow-lg  ">
+            <div class="flex">
+                <div>
+
+                    <div class="range-container">
+                        <label for="brightnessRange">Brightness:</label>
+                        <input type="range" id="brightnessRange" min="0" max="2" step="0.1" value="1" />
+                    </div>
+                    <div class="range-container">
+                        <label for="contrastRange">Contrast:</label>
+                        <input type="range" id="contrastRange" min="0" max="2" step="0.1" value="1" />
+                    </div>
+                    <div class="range-container">
+                        <label for="saturationRange">Saturation:</label>
+                        <input type="range" id="saturationRange" min="0" max="2" step="0.1" value="1" />
+                    </div>
+                    <div class="range-container">
+                        <label for="temperatureRange">Temperature:</label>
+                        <input type="range" id="temperatureRange" min="0" max="2" step="0.1" value="1" />
+                    </div>
+                    <div class="range-container">
+                        <label for="gainRange">Gain:</label>
+                        <input type="range" id="gainRange" min="0" max="2" step="0.1" value="1" />
+                    </div>
+                    <div class="range-container">
+                        <label for="alphaRange">Alpha:</label>
+                        <input type="range" id="alphaRange" min="0" max="1" step="0.1" value="1" />
+                    </div>
+
+                    <div class="range-container">
+                        <label for="whiteBalanceRange">White Balance:</label>
+                        <!-- <input type="range" id="whiteBalanceRange" min="0" max="3" step="0.01" value="0" /> -->
+                        <input type="range" id="whiteBalanceRange" min="0.5" max="7" step="0.01" value="0" />
+
+                    </div>
+                    <div class="range-container">
+                        <label for="tintRange">Tint:</label>
+                        <input type="range" id="tintRange" min="0" max="360" step="1" value="0" />
+                    </div>
+                    <div class="range-container">
+                        <label for="fpsRange">FPS:</label>
+                        <input type="range" id="fpsRange" min="1" max="60" step="1" value="30" />
+                        <span id="fpsValue">30</span>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="frame-container">
+                        <label>Frame:</label>
+                        <select id="frameSelect">
+                            <option value="none">None</option>
+                            <option value="dashed">Dashed</option>
+                            <option value="dotted">Dotted</option>
+                        </select>
+                        <div>
+                            <label for="frameWidth">Width:</label>
+                            <inputtype="text" id="frameWidth" value="0" />
+                        </div>
+                        <div>
+                            <label for="frameHeight">Height:</label>
+                            <inputtype="text" id="frameHeight" value="0" />
+                        </div>
+                        <div class="coordinate-container">
+                            <label for="frameX">X:</label>
+                            <inputtype="text" id="frameX" value="0" />
+                            <label for="frameY">Y:</label>
+                            <inputtype="text" id="frameY" value="0" />
+                        </div>
+                    </div>
+                    <div class="range-container">
+                        <label for="startTime">Start Time (seconds):</label>
+                        <inputtype="text" id="startTime" min="0" value="0" />
+                    </div>
+                    <div class="range-container">
+                        <label for="endTime">End Time (seconds):</label>
+                        <inputtype="text" id="endTime" min="0" value="10" />
+                    </div>
+                </div>
+            </div>
+            <button id="clipButton" class="button">Clip Video</button>
+            <button id="captureImageButton" class="button">Capture Image</button>
+        </div>
+        <!-- Right side: Options and buttons -->
+
+
+    </div>
+
+    <div class="absolute top-0 bottom-0 left-0 right-0 z-40 bg-black bg-opacity-50  " id="loading"
+        style="display: none;">
+        <div class="p-10 rounded-lg shadow-lg bg-white w-fit mx-auto mt-52">
+            <div class="flex gap-x-2 items-center">
+
+                <div role="status">
+                    <svg aria-hidden="true" class="w-6 h-6 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                        viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                            fill="currentColor" />
+                        <path
+                            d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                            fill="currentFill" />
+                    </svg>
+                    <span class="sr-only">Loading...</span>
+                </div>
+
+                <h1 class="font-bold my-2"> Status:</h1>
+            </div>
+            <div id="statusMessage" class="text-red-600"></div>
+            <button onclick="toggleloading(false)"
+                class="text-white bg-green-500 rounded-md px-4 py-2 hover:bg-green-700 mt-4">OK</button>
+        </div>
+
+    </div>
+
+    <canvas id="canvas" style="display: none"></canvas>
+
+
+    <!-- File input and upload button -->
+    <input type="file" id="fileInput" class="hidden" />
+
+    <script>
+
+//         const windowHeight = window.innerHeight;
+// document.getElementById("imgSperm").height =windowHeight-200;
+        // below js is just for styling
+        // File input and upload button
+        const fileInput = document.getElementById("fileInput");
+        const uploadBtn = document.getElementById("uploadBtn");
+        const processBtn = document.getElementById("processBtn");
+        const statusMessage = document.getElementById("statusMessage");
+        let socket = null;
+        // Function to handle file upload
+        const isloading = document.getElementById('loading')
+        function toggleloading(val) {
+
+            if (val === true) {
+                isloading.style.display = 'block'
+            }
+
+            else {
+                isloading.style.display = 'none'
+            }
+        }
+
+        // document.getElementById('navigateButton').addEventListener('click', function() {
+        //     window.location.href = 'http://127.0.0.1:5000';
+        // });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document
+                .getElementById("processBtn")
+                .addEventListener("click", temp_processVideo);
+        });
+
+
+        const videoplayer = document.getElementById("player");
+        function handleFileUpload(file) {
+            const formData = new FormData();
+            formData.append("video", file);
+            toggleloading(true)
+            console.log(server_api)
+            fetch(`${server_api}/upload`, {
+                method: "POST",
+                body: formData,
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error("Upload failed");
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    console.log("Upload successful:", data);
+                    // Enable the process button after successful upload
+                    document.getElementById("processBtn").disabled = false;
+                    // Set the source of the uploaded video element
+
+                    document.getElementById("uploadedVideo").pause(); // Reload the video player
+                    document.getElementById("videoSource").src =
+                        `${server_api}/static/uploads/`+ data.filename;
+                    document.getElementById("uploadedVideo").load(); // Reload the video player
+                    document.getElementById("uploadedVideo").play(); // Start playing the video
+
+                    statusMessage.textContent = "Upload Successful";
+                    localStorage.setItem("filename", data.filename);
+
+                })
+                .catch((error) => {
+                    console.error("Error uploading file:", error);
+                });
+        }
+
+        function processVideo() {
+
+
+            toggleloading(true);
+            statusMessage.textContent = "Processing your video please wait";
+            const filename = localStorage.getItem("filename");
+
+            fetch(`${server_api}/process_video_motility`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ filename: filename }),
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    console.log(data);
+
+                    // Update Total Cells Last Frame
+                    document.getElementById('totalCellsValue').value = safeValue(data.total_cells_last_frame);
+                    function safeValue(value) {
+                        return isNaN(value) ? 0 : (value.toFixed(3));
+                    }
+
+                    // Update VCL (1s)
+                    document.getElementById('vcl1sA').value = safeValue(data.vcl_1s.A);
+                    document.getElementById('vcl1sB').value = safeValue(data.vcl_1s.B);
+                    document.getElementById('vcl1sC').value = safeValue(data.vcl_1s.C);
+                    document.getElementById('vcl1sD').value = safeValue(data.vcl_1s.D);
+
+                    // Update VCL (3s)
+                    document.getElementById('vcl3sA').value = safeValue(data.vcl_3s.A);
+                    document.getElementById('vcl3sB').value = safeValue(data.vcl_3s.B);
+                    document.getElementById('vcl3sC').value = safeValue(data.vcl_3s.C);
+                    document.getElementById('vcl3sD').value = safeValue(data.vcl_3s.D);
+
+                    // Update VSL (1s)
+                    document.getElementById('vsl1sA').value = safeValue(data.vsl_1s.A);
+                    document.getElementById('vsl1sB').value = safeValue(data.vsl_1s.B);
+                    document.getElementById('vsl1sC').value = safeValue(data.vsl_1s.C);
+                    document.getElementById('vsl1sD').value = safeValue(data.vsl_1s.D);
+
+                    // Update VSL (3s)
+                    document.getElementById('vsl3sA').value = safeValue(data.vsl_3s.A);
+                    document.getElementById('vsl3sB').value = safeValue(data.vsl_3s.B);
+                    document.getElementById('vsl3sC').value = safeValue(data.vsl_3s.C);
+                    document.getElementById('vsl3sD').value = safeValue(data.vsl_3s.D);
+
+                    // Update VAP (1s)
+                    document.getElementById('vap1sA').value = safeValue(data.vap_1s.A);
+                    document.getElementById('vap1sB').value = safeValue(data.vap_1s.B);
+                    document.getElementById('vap1sC').value = safeValue(data.vap_1s.C);
+                    document.getElementById('vap1sD').value = safeValue(data.vap_1s.D);
+
+                    // Update VAP (3s)
+                    document.getElementById('vap3sA').value = safeValue(data.vap_3s.A);
+                    document.getElementById('vap3sB').value = safeValue(data.vap_3s.B);
+                    document.getElementById('vap3sC').value = safeValue(data.vap_3s.C);
+                    document.getElementById('vap3sD').value = safeValue(data.vap_3s.D);
+
+                    document.getElementById('A').value = safeValue(data.D);
+                    document.getElementById('B').value = safeValue(data.B);
+                    document.getElementById('C').value = safeValue(data.A);
+                    document.getElementById('D').value = safeValue(data.C);
+
+                    // Fill input fields with processed data
+                    // document.getElementById("total_count_sperm").value = data.total_sperm;
+                    // document.getElementById("highly_motile_sperm").value = data.highly_motile;
+                    // document.getElementById("medium_motile_sperm").value = data.medium_motile;
+                    // document.getElementById("non_motile_sperm").value = data.non_motile;
+
+                    const uploadedVideo = document.getElementById("uploadedVideo");
+                    let videoSource = document.getElementById("videoSource");
+                    videoSource.src = `${server_api}/get-video/TrackOutput.mp4?timestamp=${new Date().getTime()}`;
+
+                    uploadedVideo.addEventListener('loadedmetadata', function () {
+                        uploadedVideo.play();
+                    });
+
+                    uploadedVideo.addEventListener('error', function () {
+                        console.error("Error loading video.");
+                    });
+
+                    toggleVideoDisplay(true);
+                    uploadedVideo.load(); // Reload the video player
+                    toggleloading(true)
+                    statusMessage.textContent = "Video processing successful";
+                    statusMessage.classList.remove("text-red-600");
+                    statusMessage.classList.add("text-green-600");
+                })
+                .catch((error) => {
+                    toggleloading(true)
+                    statusMessage.textContent = "Video processing failed";
+                    statusMessage.classList.remove("text-green-600");
+                    statusMessage.classList.add("text-red-600");
+                    console.error("There was a problem with the fetch operation:", error);
+                });
+        }
+        function updateImage() {
+            const fileInput = document.getElementById("file");
+            const imgElement = document.getElementById("imgSperm");
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                imgElement.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+
+            document.getElementById("total").value = null;
+            document.getElementById("high_speed").value = null;
+            document.getElementById("medium_speed").value = null;
+            document.getElementById("low_speed").value = null;
+            document.getElementById("dead").value = null;
+        }
+
+        // Event listener for file input change
+        document
+            .getElementById("fileInput")
+            .addEventListener("change", (event) => {
+                event.preventDefault()
+                const file = event.target.files[0];
+                if (file) {
+                    handleFileUpload(file);
+
+                }
+
+            });
+
+        // Event listener for upload button click
+        document.getElementById("uploadBtn").addEventListener("click", () => {
+            document.getElementById("fileInput").click();
+
+        });
+
+        // Event listener for process button click
+
+
+        function temp_processVideo() {
+            const imgElement = document.getElementById("imgSperm");
+            if (imgElement.style.display == 'none') {
+                processVideo()
+            } else {
+                captureVideo()
+            }
+        }
+        // // Event listener for upload button click
+        // uploadBtn.addEventListener("click", () => {
+        //   fileInput.click();
+        // });
+
+        // Event listener for file input change
+        fileInput.addEventListener("change", () => {
+            processBtn.disabled = false;
+            statusMessage.textContent = "";
+            toggleVideoDisplay(true);
+        });
+
+        var img = document.getElementById('streamImage');
+        var frameRate = 10; // frames per second
+        var captureDuration = 12; // seconds
+        var frames = [];
+        var capturingVideo = false;
+        function captureFrame() {
+            var canvas = document.createElement('canvas');
+            var context = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            context.drawImage(img, 0, 0, img.width, img.height);
+            frames.push(canvas.toDataURL('image/jpeg'));
+        }
+
+        // function captureVideo() {
+        //     toggleloading(true)
+        //     statusMessage.textContent = "Video Recording Started..."
+
+        //     frames = []; // Clear previous frames
+        //     capturingVideo = true; // Start video capturing
+        //     var imgElement = document.getElementById("imgSperm");
+        //     var intervalId = setInterval(function () {
+        //         captureFrameFromImageElement(imgElement);
+        //     }, 1000 / frameRate);
+
+        //     setTimeout(function () {
+        //         clearInterval(intervalId);
+        //         capturingVideo = false; // Stop video capturing
+        //         toggleloading(true)
+        //         statusMessage.textContent = '12-second video captured from the camera!'
+
+        //         saveVideoToFile(); // Save the captured frames as a video file
+        //     }, captureDuration * 1000);
+        // }
+
+        // function captureFrameFromImageElement(imgElement) {
+        //     var canvas = document.createElement('canvas');
+        //     var context = canvas.getContext('2d');
+        //     canvas.width = imgElement.width;
+        //     canvas.height = imgElement.height;
+        //     context.drawImage(imgElement, 0, 0, imgElement.width, imgElement.height);
+        //     frames.push(canvas.toDataURL('image/jpeg'));
+        // }
+
+        // function saveVideoToFile() {
+        //     var xhr = new XMLHttpRequest();
+        //     xhr.open('POST', 'http://localhost:5000/save-captured-video', true);
+        //     xhr.setRequestHeader('Content-Type', 'application/json');
+        //     xhr.send(JSON.stringify({ frames: frames }));
+        //     xhr.onload = function () {
+        //         if (xhr.status == 200) {
+        //             var response = JSON.parse(xhr.responseText);
+        //             localStorage.setItem("filename", response.filename);
+        //             processBtn.disabled = false; // Enable processing button after file is saved
+        //             processVideo()
+        //         } else {
+        //             console.error('Error saving video file:', xhr.responseText);
+        //             toggleloading(true)
+        //             statusMessage.textContent = 'Error saving video'
+        //         }
+        //     };
+        // }
+
+        // document.getElementById('detectCameraBtn').addEventListener('click', function () {
+        //     toggleVideoDisplay(false);
+        //     document.getElementById("processBtn").disabled = false;
+        //     const imgElement = document.getElementById("imgSperm");
+        //     if (!socket) {
+        //         socket = io.connect('http://localhost:5000');
+        //         socket.on('image_frame', function (data) {
+        //             imgElement.src = 'data:image/jpeg;base64,' + data.image;
+
+        //         });
+        //     } else {
+        //         socket.disconnect();
+        //         socket = null;
+        //     }
+
+        // });
+
+
+        function toggleVideoDisplay(showVideo) {
+            const imgElement = document.getElementById("imgSperm");
+            const videoElement = document.getElementById("uploadedVideo");
+
+            if (showVideo) {
+                imgElement.style.display = 'none'; // Hide the image element
+                videoElement.style.display = 'block'; // Show the video element
+            } else {
+                imgElement.style.display = 'block'; // Show the image element
+                videoElement.style.display = 'none'; // Hide the video element
+            }
+        }
+
+
+
+
+        // new filter added code below 
+
+
+        //Filter input code below
+
+
+        function toggleCanvasDisplay(showCanvas) {
+            const canvas = document.getElementById("canvas");
+            canvas.style.display = showCanvas ? "block" : "none";
+        }
+
+
+
+
+
+
+        const videoElement = document.getElementById('imgSperm');
+        const brightnessRange = document.getElementById('brightnessRange');
+        const contrastRange = document.getElementById('contrastRange');
+        const saturationRange = document.getElementById('saturationRange');
+        const temperatureRange = document.getElementById('temperatureRange');
+        const gainRange = document.getElementById('gainRange');
+        const alphaRange = document.getElementById('alphaRange');
+        const tintRange = document.getElementById('tintRange');
+        const selection = document.getElementById('selection');
+        const frameSelect = document.getElementById('frameSelect');
+        const frameX = document.getElementById('frameX');
+        const frameY = document.getElementById('frameY');
+        const canvas = document.getElementById('canvas');
+
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        const ctx = canvas.getContext('2d');
+
+    
+
+        const fpsRange = document.getElementById('fpsRange');
+        const fpsValue = document.getElementById('fpsValue');
+
+
+        fpsRange.addEventListener('input', function () {
+            fpsValue.textContent = this.value;
+            videoElement.playbackRate = this.value / 30;
+        });
+
+
+
+
+
+        function captureVideo() {
+            toggleloading(true);
+            statusMessage.textContent = "Video Recording Started...";
+
+            frames = []; // Clear previous frames
+            capturingVideo = true; // Start video capturing
+            var imgElement = document.getElementById("imgSperm");
+            var intervalId = setInterval(function () {
+                captureFrameFromImageElement(imgElement);
+            }, 1000 / frameRate);
+
+            setTimeout(function () {
+                clearInterval(intervalId);
+                capturingVideo = false; // Stop video capturing
+                toggleloading(true);
+                statusMessage.textContent = '12-second video captured from the camera!';
+
+                saveVideoToFile(); // Save the captured frames as a video file
+            }, captureDuration * 1000);
+        }
+
+        function applyFiltersToVideoElement() {
+            const brightnessValue = parseFloat(brightnessRange.value);
+            const contrastValue = parseFloat(contrastRange.value);
+            const saturationValue = parseFloat(saturationRange.value);
+            const alphaValue = parseFloat(alphaRange.value);
+            const tintValue = parseFloat(tintRange.value);
+            const temperatureValue = parseFloat(temperatureRange.value);
+            const gainValue = parseFloat(gainRange.value);
+
+            videoElement.style.filter = `brightness(${brightnessValue}) contrast(${contrastValue}) saturate(${saturationValue}) hue-rotate(${(temperatureValue - 1) * 180}deg) opacity(${alphaValue}) hue-rotate(${tintValue}deg)`;
+            videoElement.style.opacity = gainValue;
+        }
+
+        function applyFiltersToContext(context, canvas) {
+            const brightnessValue = parseFloat(brightnessRange.value);
+            const contrastValue = parseFloat(contrastRange.value);
+            const saturationValue = parseFloat(saturationRange.value);
+            const alphaValue = parseFloat(alphaRange.value);
+            const tintValue = parseFloat(tintRange.value);
+            const temperatureValue = parseFloat(temperatureRange.value);
+            const gainValue = parseFloat(gainRange.value);
+
+            context.filter = `brightness(${brightnessValue}) contrast(${contrastValue}) saturate(${saturationValue}) hue-rotate(${(temperatureValue - 1) * 180}deg) opacity(${alphaValue}) hue-rotate(${tintValue}deg)`;
+            context.globalAlpha = gainValue;
+
+            // Apply filters to the drawn image
+            context.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+        }
+
+        function captureFrameFromImageElement(imgElement) {
+            var canvas = document.createElement('canvas');
+            var context = canvas.getContext('2d');
+            canvas.width = imgElement.width;
+            canvas.height = imgElement.height;
+            context.drawImage(imgElement, 0, 0, imgElement.width, imgElement.height);
+
+            // Apply filters to context
+            applyFiltersToContext(context, canvas);
+
+            frames.push(canvas.toDataURL('image/jpeg'));
+        }
+
+        function saveVideoToFile() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', `${server_api}/save-captured-video`, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send(JSON.stringify({ frames: frames }));
+            xhr.onload = function () {
+                if (xhr.status == 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    localStorage.setItem("filename", response.filename);
+                    processBtn.disabled = false; // Enable processing button after file is saved
+                    processVideo();
+                } else {
+                    console.error('Error saving video file:', xhr.responseText);
+                    toggleloading(true);
+                    statusMessage.textContent = 'Error saving video';
+                }
+            };
+        }
+
+        // Call this function to apply filters to the video element for live preview
+        function updateLivePreview() {
+            applyFiltersToVideoElement();
+        }
+
+        // Add event listeners to filter range inputs to update the live preview in real-time
+        brightnessRange.addEventListener('input', updateLivePreview);
+        contrastRange.addEventListener('input', updateLivePreview);
+        saturationRange.addEventListener('input', updateLivePreview);
+        alphaRange.addEventListener('input', updateLivePreview);
+        tintRange.addEventListener('input', updateLivePreview);
+        temperatureRange.addEventListener('input', updateLivePreview);
+        gainRange.addEventListener('input', updateLivePreview);
+
+        // Initial call to apply filters when the page loads
+        window.onload = updateLivePreview();
+
+        
+
+
+        document.getElementById('frameWidth').addEventListener('input', function () {
+            const width = this.value;
+            selection.style.width = `${width}px`;
+            selection.style.display = 'block';
+        });
+
+        document.getElementById('frameHeight').addEventListener('input', function () {
+            const height = this.value;
+            selection.style.height = `${height}px`;
+            selection.style.display = 'block';
+        });
+
+        frameSelect.addEventListener('change', function () {
+            const frameStyle = this.value;
+            selection.style.borderStyle = frameStyle;
+            selection.style.display = frameStyle === 'none' ? 'none' : 'block';
+        });
+
+        frameX.addEventListener('input', function () {
+            const x = this.value;
+            selection.style.left = `${x}px`;
+        });
+
+        frameY.addEventListener('input', function () {
+            const y = this.value;
+            selection.style.top = `${y}px`;
+        });
+
+        document.getElementById('clipButton').addEventListener('click', function () {
+            // const file = document.getElementById('upload').files[0];
+            const formData = new FormData();
+            // formData.append('file', file);
+            formData.append('brightness', brightnessRange.value);
+            formData.append('contrast', contrastRange.value);
+            formData.append('saturation', saturationRange.value);
+            formData.append('temperature', temperatureRange.value);
+            formData.append('gain', gainRange.value);
+            formData.append('alpha', alphaRange.value);
+            formData.append('tint', tintRange.value);
+            formData.append('startX', frameX.value);
+            formData.append('startY', frameY.value);
+            formData.append('endX', parseInt(frameX.value) + parseInt(document.getElementById('frameWidth').value));
+            formData.append('endY', parseInt(frameY.value) + parseInt(document.getElementById('frameHeight').value));
+            formData.append('frameWidth', document.getElementById('frameWidth').value);
+            formData.append('frameHeight', document.getElementById('frameHeight').value);
+            formData.append('startTime', document.getElementById('startTime').value);
+            formData.append('endTime', document.getElementById('endTime').value);
+            const fpsValue = document.getElementById('fpsRange').value;
+            formData.append('fps', fpsValue);
+
+
+
+
+            fetch('api/clip', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'filtered_clip.mp4';
+                    link.click();
+                })
+                .catch(error => console.error('Error clipping video:', error));
+        });
+
+
+        document.getElementById('captureImageButton').addEventListener('click', function () {
+            const frameWidth = parseInt(document.getElementById('frameWidth').value);
+            const frameHeight = parseInt(document.getElementById('frameHeight').value);
+
+
+            const frameX = parseInt(document.getElementById('frameX').value);
+            const frameY = parseInt(document.getElementById('frameY').value);
+
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const imgElement = document.getElementById('imgSperm');
+
+            // Calculate the width and height for the canvas
+            const canvasWidth = frameWidth;
+            const canvasHeight = frameHeight;
+
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+
+            // Debugging: Log dimensions and coordinates
+            console.log('Frame Coordinates:', frameX, frameY);
+            console.log('Frame Dimensions:', canvasWidth, canvasHeight);
+
+            // Ensure the image is fully loaded before drawing
+            imgElement.onload = function () {
+                // Apply CSS filters from the image to the canvas context
+                ctx.filter = getComputedStyle(imgElement).filter;
+
+                // Draw the selected part of the image onto the canvas
+                ctx.drawImage(imgElement, frameX, frameY, frameWidth, frameHeight, 0, 0, canvasWidth, canvasHeight);
+
+                // Debugging: Log canvas dimensions
+                console.log('Canvas Dimensions:', canvas.width, canvas.height);
+                console.log('ctx', ctx)
+
+                // Frame style
+                const frameStyle = document.getElementById('frameSelect').value;
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([]);
+
+                if (frameStyle === 'dashed') {
+                    ctx.setLineDash([5, 5]);
+                } else if (frameStyle === 'dotted') {
+                    ctx.setLineDash([2, 2]);
+                }
+
+                // Draw the rectangle frame
+                ctx.strokeRect(0, 0, canvasWidth, canvasHeight);
+
+                // Convert the canvas to a data URL and download the image
+                const imageDataURL = canvas.toDataURL('image/png');
+                const downloadLink = document.createElement('a');
+                downloadLink.href = imageDataURL;
+                downloadLink.download = 'filtered_image.png';
+                downloadLink.click();
+            };
+
+            // If the image is already loaded, trigger the onload event manually
+            // if (imgElement.complete) {
+            imgElement.onload();
+            // }
+        });
+
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Your JavaScript code here
+            const selectionElement = document.querySelector('.selection');
+            if (selectionElement) {
+                selectionElement.style.display = 'none';
+            } else {
+                console.error("Element with class 'selection' not found.");
+            }
+        });
+
+
+        const rect = document.getElementById('imgSperm').getBoundingClientRect();
+
+        const x = rect.left + window.scrollX;
+        const y = rect.top + window.scrollY;
+
+        console.log(x, y)
+
+        document.getElementById('frameX').value = x;
+        document.getElementById('frameY').value = y;
+        console.log(document.getElementById('frameX').value)
+
+
+
+    </script>
+    <script>
+        // JavaScript to get the variable from the URL and display it
+        const urlParams = new URLSearchParams(window.location.search);
+        const myParam = urlParams.get('a');
+
+        if (myParam) {
+            document.getElementById('display').innerText = 'Frame : ' + myParam;
+        } else {
+            document.getElementById('display').innerText = '1.';
+        }
+
+       
+
+
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"
+        integrity="sha512-JjFeUD2H//RHt+DjVf1BTuy1X5ZPtMl0svQ3RopX641DWoSilJ89LsFGq4Sw/6BSBfULqUW/CfnVopV5CfvRXA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- <script src="whiteBalanceFilter.js"></script> -->
+
+    <script src="/tests/savefilter.js"></script>
+    <script src="/tests/cameradetection.js"></script>
+
+</body>
+
+</html>

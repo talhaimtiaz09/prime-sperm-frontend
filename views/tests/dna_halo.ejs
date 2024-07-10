@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DNA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+<style>
+   input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      opacity: 1;
+    }
+
+
+    .capture-side label {
+        font-weight: bold;
+    }
+
+    .img-sperm {
+        width: 100%;
+        height: 90%;
+        /* max-height: 700px; */
+    }
+    
+    .capture {
+        
+        padding: 5px 10px;
+        max-width: 150px;
+    }
+
+    
+
+
+    /* futher added css for filter panel  */
+
+    body {
+        /* display: flex;
+      justify-content: center; */
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f4f4f4;
+    }
+
+    .container {
+        max-width: 200px;
+        margin: 500px;
+        padding: 150px;
+    }
+
+    .video-container {
+        display: flex;
+        flex-direction: column;
+        /* Stack items vertically */
+        align-items: center;
+        /* Center items horizontally */
+        gap: 20px;
+        /* Adjust spacing between items */
+    }
+
+    video {
+        width: 50%;
+        max-width: 50px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        background-color: #000;
+        padding-top: 400;
+    }
+
+
+
+    .panel {
+        position: relative;
+       
+    }
+
+    .button {
+        display: inline-block;
+        background-color: #ffea00;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+        text-align: center;
+    }
+
+    .button:hover {
+        background-color: #615902;
+    }
+
+    #goBackButton {
+        position: fixed;
+        top: 10px;
+        left: 20px;
+        background-color: #ff00ff;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        z-index: 9999;
+    }
+
+    #goBackButton:hover {
+        background-color: #b30071;
+    }
+
+    .file-input-container {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+    }
+
+    .file-input-container input[type="file"] {
+        position: absolute;
+        font-size: 100px;
+        opacity: 0;
+        right: 0;
+        top: 0;
+    }
+
+    .range-container label {
+        display: block;
+        margin-bottom: 2px;
+        margin-top: 10px;
+        font-weight: bold;
+        font-size: 16px;
+        color: #333;
+    }
+
+
+    #clipButton {
+        margin-right: 10px;
+        margin-top: 10px;
+        background-color: #28a745;
+        color: #fff;
+    }
+
+    #clipButton:hover {
+        background-color: #218838;
+    }
+
+    #captureImageButton {
+        margin-left: 0px;
+        margin-bottom: 10px;
+        background-color: #dc3545;
+        color: #fff;
+    }
+
+    #captureImageButton:hover {
+        background-color: #c82333;
+    }
+
+    .range-container {
+        margin-bottom: 10px;
+    }
+
+    .range-container label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .range-container input[type="range"] {
+        width: calc(100% - 40px);
+    }
+
+    .range-container output {
+        display: inline-block;
+        width: 40px;
+        margin-left: 10px;
+    }
+
+    .selection {
+        position: absolute;
+        top: 0;
+        /* Adjust as needed */
+        left: 0;
+        /* Adjust as needed */
+        width: 100px;
+        /* Adjust as needed */
+        height: 100px;
+        /* Adjust as needed */
+        border: 2px dashed red;
+        pointer-events: none;
+        z-index: 9999;
+        /* Ensure it's above other content */
+        display: none;
+        /* Ensure it's visible */
+    }
+
+    .frame-container {
+        margin-top: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    .frame-container label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .frame-container select{
+        width: calc(50% - 5px);
+        padding: 5px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    .coordinate-container {
+        margin-top: 10px;
+    }
+</style>
+
+<body>
+
+    <script>
+        window.client_api = "<%= client_api %>";
+        window.server_api = "<%= server_api %>";
+        const server_api = window.server_api;
+      </script>
+
+
+    <div class=" text-red-900 flex gap-x-2 w-full items-start p-4 ">
+        <div class="">
+            <div class=" flex items-center">
+
+                    <button id="uploadBtn"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full m-2">
+                        Browse
+                    </button>
+                    <button id="snap" onclick="captureImage()"
+                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full m-2">
+                        Capture
+                    </button>
+
+            
+
+                <div class="my-5 flex items-center gap-x-2">
+                    <label for="">Core Level: </label>
+                    <input class="p-2 rounded-md w-20" placeholder="-- Core Level" type="number" min="0" id="coreLevel"
+                        value="10" onchange="captureImage()">
+                    <label for="">Halo Level: </label>
+                    <input class="p-2 rounded-md w-20" placeholder="-- Halo Level" type="number" min="0" id="haloLevel"
+                        value="25" onchange="captureImage()">
+                </div>
+
+                <input type="file" id="fileInput" class="hidden" />
+                <div  class=" ">
+                    <form action="https://www.rssdinfotech.com/prime/1.php" method="post" enctype="multipart/form-data"
+                        name="addroom" name="addroom">
+                        <div class="flex gap-x-2 items-center justify-center mx-10 items-center">
+                            <div class="">
+
+                                <label for="TotalSpermCount" class=" m-0">Total DNA:</label>
+                                <input type="number" class="capture" id="TotalSpermCount" name="total"
+                                    placeholder="Enter Total Sperm Count" required />
+
+                            </div>
+                            <div>
+
+                                <label for="HighSpeedSpermCount">Big Halo:</label>
+                                <input type="number" class="capture" id="HighSpeedSpermCount" name="a"
+                                    placeholder="Enter High Speed Sperm Count" required />
+                            </div>
+                            <div>
+
+
+                                <label for="MediumSpeedSpermCount">Medium Halo:</label>
+                                <input type="number" class="capture" id="MediumSpeedSpermCount" name="b"
+                                    placeholder="Enter Medium Speed Sperm Count" required />
+                            </div>
+                            <div>
+
+
+                                <label for="LowSpeedSpermCount">Small Halo:</label>
+                                <input type="number" class="capture" id="LowSpeedSpermCount" name="c"
+                                    placeholder="Enter Low Speed Sperm Count" required />
+                            </div>
+                            <div>
+
+
+                                <label for="DeadSpermCount">Dust Count:</label>
+                                <input type="number" class="capture" id="DeadSpermCount" name="d"
+                                    placeholder="Enter Dead Sperm Count" required />
+
+                            </div>
+                            <input type="submit" class="  px-6 py-2 bg-red-500 text-white rounded-full" name="submit" />
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+            <div class="w-full h-full">
+                <img id="imgSperm" class="w-full " src="" />
+                <img id="imgSpermCopy" hidden />
+                <!-- <img id="imgSperm" class="img-sperm" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSlGArSue-SnOQjyKa6z1hfD7Kcf5LvSYhKPg&s"></img> -->
+
+                <div id="selection" class="selection"></div>
+
+            </div>
+
+        </div>
+
+        <div class=" w-1/5 py-10 p-4 border shadow-lg ">
+            <div class="flex">
+
+                <div>
+
+
+                    <div class="range-container">
+                        <label for="brightnessRange">Brightness:</label>
+                        <input type="range" id="brightnessRange" min="0" max="2" step="0.1" value="1">
+                    </div>
+                    <div class="range-container">
+                        <label for="contrastRange">Contrast:</label>
+                        <input type="range" id="contrastRange" min="0" max="2" step="0.1" value="1">
+                    </div>
+                    <div class="range-container">
+                        <label for="saturationRange">Saturation:</label>
+                        <input type="range" id="saturationRange" min="0" max="2" step="0.1" value="1">
+                    </div>
+                    <div class="range-container">
+                        <label for="temperatureRange">Temperature:</label>
+                        <input type="range" id="temperatureRange" min="0" max="2" step="0.1" value="1">
+                    </div>
+                    <div class="range-container">
+                        <label for="gainRange">Gain:</label>
+                        <input type="range" id="gainRange" min="0" max="2" step="0.1" value="1">
+                    </div>
+                    <div class="range-container">
+                        <label for="alphaRange">Alpha:</label>
+                        <input type="range" id="alphaRange" min="0" max="1" step="0.1" value="1">
+                    </div>
+                    <div class="range-container">
+                        <label for="whiteBalanceRange">White Balance:</label>
+                        <!-- <input type="range" id="whiteBalanceRange" min="0" max="360" step="1" value="0" /> -->
+                        <input type="range" id="whiteBalanceRange" min="0.5" max="7" step="0.01" value="0" />
+
+                    </div>
+                    <div class="range-container">
+                        <label for="tintRange">Tint:</label>
+                        <input type="range" id="tintRange" min="0" max="360" step="1" value="0">
+                    </div>
+                    <div class="range-container">
+                        <label for="fpsRange">FPS:</label>
+                        <input type="range" id="fpsRange" min="1" max="60" step="1" value="30">
+                        <span id="fpsValue">30</span> FPS
+                    </div>
+                </div>
+
+                <div>
+
+
+                    <div class="frame-container">
+                        <label>Frame:</label>
+                        <select id="frameSelect">
+                            <option value="none">None</option>
+                            <option value="dashed">Dashed</option>
+                            <option value="dotted">Dotted</option>
+                        </select>
+                        <div>
+                            <label for="frameWidth">Width:</label>
+                            <input type="number" id="frameWidth" value="0">
+                        </div>
+                        <div>
+                            <label for="frameHeight">Height:</label>
+                            <input type="number" id="frameHeight" value="0">
+                        </div>
+                        <div class="coordinate-container">
+                            <label for="frameX">X:</label>
+                            <input type="number" id="frameX" value="0">
+                            <label for="frameY">Y:</label>
+                            <input type="number" id="frameY" value="0">
+                        </div>
+                    </div>
+                    <div class="range-container">
+                        <label for="startTime">Start Time (seconds):</label>
+                        <input type="number" id="startTime" min="0" value="0">
+                    </div>
+                    <div class="range-container">
+                        <label for="endTime">End Time (seconds):</label>
+                        <input type="number" id="endTime" min="0" value="10">
+                    </div>
+
+                </div>
+
+            </div>
+            <button id="clipButton" class="button">Clip Video</button>
+            <button id="captureImageButton" class="button">Capture Image</button>
+        </div>
+    </div>
+
+    <canvas id="canvas" style="display: block"></canvas>
+
+    <script>
+        const uploadBtn = document.getElementById("uploadBtn");
+        let socket = null;
+        document
+            .getElementById("fileInput")
+            .addEventListener("change", (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    updateImage(file);
+                    if (socket) {
+                        socket.disconnect();
+                        socket = null;
+                    }
+                }
+            });
+        document.getElementById("uploadBtn").addEventListener("click", () => {
+            document.getElementById("fileInput").click();
+        });
+
+        // document
+        //   .getElementById("detectCameraBtn")
+        //   .addEventListener("click", function () {
+        //     const imgElement = document.getElementById("imgSperm");
+
+        //     if (!socket) {
+        //       socket = io.connect(`${server_api}");
+        //       socket.on("image_frame", function (data) {
+        //         imgElement.src = "data:image/jpeg;base64," + data.image;
+        //       });
+        //     } else {
+        //       socket.disconnect();
+        //       socket = null;
+        //     }
+        //   });
+
+      
+
+        let processedFirstTime = true;
+
+        function captureImage() {
+            if (processedFirstTime === true) {
+                document.getElementById("imgSpermCopy").src
+                    = document.getElementById("imgSperm").src
+                processedFirstTime = false;
+            }
+            const imgElement = document.getElementById("imgSperm");
+            const imgElementCopy = document.getElementById("imgSpermCopy");
+
+        const capturedImgSrc =captureFrameFromImageElement(imgElementCopy);
+        fetch(capturedImgSrc)
+                .then((response) => response.blob())
+                .then((blob) => {
+                    const coreLevel = document.getElementById('coreLevel').value
+                    const haloLevel = document.getElementById('haloLevel').value
+                    const formData = new FormData();
+                    formData.append("image", blob);
+                    formData.append("coreLevel", coreLevel);
+                    formData.append("haloLevel", haloLevel);
+                    console.log(formData)
+                    fetch(`${server_api}/process_image_dna`, {
+                        method: "POST",
+                        body: formData,
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (socket) {
+                  socket.disconnect();
+                  socket = null;
+                  window.pauseSocket=true;
+                }
+                            const imgElement = document.getElementById("imgSperm");
+                            imgElement.src = data.imageData;
+                            document.getElementById("TotalSpermCount").value =
+                                data.halo_counts.total;
+                            document.getElementById("HighSpeedSpermCount").value =
+                                data.halo_counts.big;
+                            document.getElementById("MediumSpeedSpermCount").value =
+                                data.halo_counts.medium;
+                            document.getElementById("LowSpeedSpermCount").value =
+                                data.halo_counts.small;
+                            document.getElementById("DeadSpermCount").value =
+                                data.halo_counts.dead;
+
+                            // Change code here
+                            fetch(imgElement.src)
+                                .then((response) => response.blob())
+                                .then((blob) => {
+                                    const formData = new FormData();
+                                    formData.append("image", blob, "capture.png");
+                                    if (socket) {
+                                        socket.disconnect();
+                                        socket = null;
+                                    }
+                                    // More fields can be added similarly
+                                    fetch(`${server_api}/upload-image`, {
+                                        method: "POST",
+                                        body: formData,
+                                    })
+                                        .then((response) => response.json())
+                                        .then((data) => console.log("Success:", data))
+                                        .catch((error) => console.error("Error:", error));
+                                })
+                                .catch((error) => {
+                                    console.error("Error fetching image:", error);
+                                });
+                        })
+                        .catch((error) => {
+                            console.error("Error:", error);
+                        });
+                })
+                .catch((error) => {
+                    console.error("Error fetching image:", error);
+                });
+        }
+
+        function updateImage(file) {
+            const imgElement = document.getElementById("imgSperm");
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                imgElement.src = e.target.result;
+                // Clear the previously displayed counts when a new image is loaded
+                document.getElementById("TotalSpermCount").value = "";
+                document.getElementById("HighSpeedSpermCount").value = "";
+                document.getElementById("MediumSpeedSpermCount").value = "";
+                document.getElementById("LowSpeedSpermCount").value = "";
+                document.getElementById("DeadSpermCount").value = "";
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // new filter added code below
+
+        //Filter input code below
+
+        function toggleCanvasDisplay(showCanvas) {
+            const canvas = document.getElementById("canvas");
+            canvas.style.display = showCanvas ? "block" : "none";
+        }
+
+        const videoElement = document.getElementById("imgSperm");
+        const brightnessRange = document.getElementById("brightnessRange");
+        const contrastRange = document.getElementById("contrastRange");
+        const saturationRange = document.getElementById("saturationRange");
+        const temperatureRange = document.getElementById("temperatureRange");
+        const gainRange = document.getElementById("gainRange");
+        const alphaRange = document.getElementById("alphaRange");
+        const tintRange = document.getElementById("tintRange");
+        const selection = document.getElementById("selection");
+        const frameSelect = document.getElementById("frameSelect");
+        const frameX = document.getElementById("frameX");
+        const frameY = document.getElementById("frameY");
+        const canvas = document.getElementById("canvas");
+
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        const ctx = canvas.getContext("2d");
+
+        // document
+        //     .getElementById("upload")
+        //     .addEventListener("change", function (event) {
+        //         const file = event.target.files[0];
+        //         const url = URL.createObjectURL(file);
+        //         videoElement.src = url;
+        //     });
+
+        const fpsRange = document.getElementById("fpsRange");
+        const fpsValue = document.getElementById("fpsValue");
+
+        fpsRange.addEventListener("input", function () {
+            fpsValue.textContent = this.value;
+            videoElement.playbackRate = this.value / 30;
+        });
+
+       
+      function applyFiltersToVideoElement() {
+        const brightnessValue = parseFloat(brightnessRange.value);
+        const contrastValue = parseFloat(contrastRange.value);
+        const saturationValue = parseFloat(saturationRange.value);
+        const alphaValue = parseFloat(alphaRange.value);
+        const tintValue = parseFloat(tintRange.value);
+        const temperatureValue = parseFloat(temperatureRange.value);
+        const gainValue = parseFloat(gainRange.value);
+
+        videoElement.style.filter = `brightness(${brightnessValue}) contrast(${contrastValue}) saturate(${saturationValue}) hue-rotate(${
+          (temperatureValue - 1) * 180
+        }deg) opacity(${alphaValue}) hue-rotate(${tintValue}deg)`;
+        videoElement.style.opacity = gainValue;
+      }
+
+      function applyFiltersToContext(context, canvas) {
+        const brightnessValue = parseFloat(brightnessRange.value);
+        const contrastValue = parseFloat(contrastRange.value);
+        const saturationValue = parseFloat(saturationRange.value);
+        const alphaValue = parseFloat(alphaRange.value);
+        const tintValue = parseFloat(tintRange.value);
+        const temperatureValue = parseFloat(temperatureRange.value);
+        const gainValue = parseFloat(gainRange.value);
+
+        context.filter = `brightness(${brightnessValue}) contrast(${contrastValue}) saturate(${saturationValue}) hue-rotate(${
+          (temperatureValue - 1) * 180
+        }deg) opacity(${alphaValue}) hue-rotate(${tintValue}deg)`;
+        context.globalAlpha = gainValue;
+
+        // Apply filters to the drawn image
+        context.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+      }
+
+      // Call this function to apply filters to the video element for live preview
+      function updateLivePreview() {
+        applyFiltersToVideoElement();
+      }
+
+      
+        // Add event listeners to filter range inputs to update the live preview in real-time
+        brightnessRange.addEventListener('input', updateLivePreview);
+        contrastRange.addEventListener('input', updateLivePreview);
+        saturationRange.addEventListener('input', updateLivePreview);
+        alphaRange.addEventListener('input', updateLivePreview);
+        tintRange.addEventListener('input', updateLivePreview);
+        temperatureRange.addEventListener('input', updateLivePreview);
+        gainRange.addEventListener('input', updateLivePreview);
+      // Initial call to apply filters when the page loads
+      window.onload = updateLivePreview();
+
+
+      function captureFrameFromImageElement(imgElement) {
+        var canvas = document.createElement("canvas");
+        var context = canvas.getContext("2d");
+        canvas.width = imgElement.width;
+        canvas.height = imgElement.height;
+        context.drawImage(
+          imgElement,
+          0,
+          0,
+          imgElement.width,
+          imgElement.height
+        );
+
+        // Apply filters to context
+        applyFiltersToContext(context, canvas);
+
+      return canvas.toDataURL("image/jpeg")
+      }
+
+        document
+            .getElementById("frameWidth")
+            .addEventListener("input", function () {
+                const width = this.value;
+                selection.style.width = `${width}px`;
+                selection.style.display = "block";
+            });
+
+        document
+            .getElementById("frameHeight")
+            .addEventListener("input", function () {
+                const height = this.value;
+                selection.style.height = `${height}px`;
+                selection.style.display = "block";
+            });
+
+        frameSelect.addEventListener("change", function () {
+            const frameStyle = this.value;
+            selection.style.borderStyle = frameStyle;
+            selection.style.display = frameStyle === "none" ? "none" : "block";
+        });
+
+        frameX.addEventListener("input", function () {
+            const x = this.value;
+            selection.style.left = `${x}px`;
+        });
+
+        frameY.addEventListener("input", function () {
+            const y = this.value;
+            selection.style.top = `${y}px`;
+        });
+
+        document
+            .getElementById("clipButton")
+            .addEventListener("click", function () {
+                const file = document.getElementById("upload").files[0];
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("brightness", brightnessRange.value);
+                formData.append("contrast", contrastRange.value);
+                formData.append("saturation", saturationRange.value);
+                formData.append("temperature", temperatureRange.value);
+                formData.append("gain", gainRange.value);
+                formData.append("alpha", alphaRange.value);
+                formData.append("tint", tintRange.value);
+                formData.append("startX", frameX.value);
+                formData.append("startY", frameY.value);
+                formData.append(
+                    "endX",
+                    parseInt(frameX.value) +
+                    parseInt(document.getElementById("frameWidth").value)
+                );
+                formData.append(
+                    "endY",
+                    parseInt(frameY.value) +
+                    parseInt(document.getElementById("frameHeight").value)
+                );
+                formData.append(
+                    "frameWidth",
+                    document.getElementById("frameWidth").value
+                );
+                formData.append(
+                    "frameHeight",
+                    document.getElementById("frameHeight").value
+                );
+                formData.append(
+                    "startTime",
+                    document.getElementById("startTime").value
+                );
+                formData.append("endTime", document.getElementById("endTime").value);
+                const fpsValue = document.getElementById("fpsRange").value;
+                formData.append("fps", fpsValue);
+
+                fetch("/clip", {
+                    method: "POST",
+                    body: formData,
+                })
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error(
+                                "Network response was not ok " + response.statusText
+                            );
+                        }
+                        return response.blob();
+                    })
+                    .then((blob) => {
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.download = "filtered_clip.mp4";
+                        link.click();
+                    })
+                    .catch((error) => console.error("Error clipping video:", error));
+            });
+
+        document
+            .getElementById("captureImageButton")
+            .addEventListener("click", function () {
+                const frameWidth = parseInt(
+                    document.getElementById("frameWidth").value
+                );
+                const frameHeight = parseInt(
+                    document.getElementById("frameHeight").value
+                );
+
+                const frameX = parseInt(document.getElementById("frameX").value);
+                const frameY = parseInt(document.getElementById("frameY").value);
+
+                const canvas = document.getElementById("canvas");
+                const ctx = canvas.getContext("2d");
+                const imgElement = document.getElementById("imgSperm");
+
+                // Calculate the width and height for the canvas
+                const canvasWidth = frameWidth;
+                const canvasHeight = frameHeight;
+
+                canvas.width = canvasWidth;
+                canvas.height = canvasHeight;
+
+                // Debugging: Log dimensions and coordinates
+                console.log("Frame Coordinates:", frameX, frameY);
+                console.log("Frame Dimensions:", canvasWidth, canvasHeight);
+
+                // Ensure the image is fully loaded before drawing
+                imgElement.onload = function () {
+                    // Apply CSS filters from the image to the canvas context
+                    ctx.filter = getComputedStyle(imgElement).filter;
+
+                    // Draw the selected part of the image onto the canvas
+                    ctx.drawImage(
+                        imgElement,
+                        frameX,
+                        frameY,
+                        frameWidth,
+                        frameHeight,
+                        0,
+                        0,
+                        canvasWidth,
+                        canvasHeight
+                    );
+
+                    // Debugging: Log canvas dimensions
+                    console.log("Canvas Dimensions:", canvas.width, canvas.height);
+                    console.log("ctx", ctx);
+
+                    // Frame style
+                    const frameStyle = document.getElementById("frameSelect").value;
+                    ctx.strokeStyle = "red";
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([]);
+
+                    if (frameStyle === "dashed") {
+                        ctx.setLineDash([5, 5]);
+                    } else if (frameStyle === "dotted") {
+                        ctx.setLineDash([2, 2]);
+                    }
+
+                    // Draw the rectangle frame
+                    ctx.strokeRect(0, 0, canvasWidth, canvasHeight);
+
+                    // Convert the canvas to a data URL and download the image
+                    const imageDataURL = canvas.toDataURL("image/png");
+                    const downloadLink = document.createElement("a");
+                    downloadLink.href = imageDataURL;
+                    downloadLink.download = "filtered_image.png";
+                    downloadLink.click();
+                };
+
+                // If the image is already loaded, trigger the onload event manually
+                //   if (imgElement.complete) {
+                imgElement.onload();
+                //   }
+            });
+
+        //     document.getElementById('goBackButton').addEventListener('click', function() {
+        // window.history.back();
+        // });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // Your JavaScript code here
+            const selectionElement = document.querySelector(".selection");
+            if (selectionElement) {
+                selectionElement.style.display = "none";
+            } else {
+                console.error("Element with class 'selection' not found.");
+            }
+        });
+
+        const rect = document.getElementById("imgSperm").getBoundingClientRect();
+
+        const x = rect.left + window.scrollX;
+        const y = rect.top + window.scrollY;
+
+        console.log(x, y);
+
+        document.getElementById("frameX").value = x;
+        document.getElementById("frameY").value = y;
+        console.log(document.getElementById("frameX").value);
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"
+        integrity="sha512-JjFeUD2H//RHt+DjVf1BTuy1X5ZPtMl0svQ3RopX641DWoSilJ89LsFGq4Sw/6BSBfULqUW/CfnVopV5CfvRXA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="/tests/cameradetection.js"></script>
+<script src="/tests/savefilter.js"></script>
+    
+</body>
+
+</html>

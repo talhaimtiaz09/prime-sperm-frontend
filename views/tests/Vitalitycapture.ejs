@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vitality</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  </head>
+  <style>
+    /* .grid-column-3-width {
+    } */
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      opacity: 1;
+    }
+
+    .capture-side {
+      background-color: #e6e6e3;
+      padding: 20px;
+    }
+
+    .capture-side form {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .capture-side label {
+      font-weight: bold;
+    }
+
+    .capture-side input {
+      width: 100%;
+      padding: 5px;
+    }
+
+    .img-sperm {
+      width: 100%;
+      height: 90%;
+      /* max-height: 700px; */
+    }
+
+    .capture {
+      padding: 5px 10px;
+    }
+
+    .btn_class {
+      height: 100px;
+    }
+
+    /* .cam-screen {
+        width: 1280px;
+        height: 720px;
+    } */
+
+    body {
+      /* display: flex;
+      justify-content: center; */
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      max-width: 200px;
+      margin: 500px;
+      padding: 150px;
+    }
+
+    .video-container {
+      display: flex;
+      flex-direction: column; /* Stack items vertically */
+      align-items: center; /* Center items horizontally */
+      gap: 20px; /* Adjust spacing between items */
+    }
+
+    video {
+      width: 50%;
+      max-width: 50px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #000;
+      padding-top: 400;
+    }
+
+    .options-panel {
+      position: absolute;
+      top: 50%;
+      right: 20px; /* Adjust distance from the right */
+      transform: translateY(-50%);
+      width: 300px; /* Adjust the width as needed */
+      padding: 16px;
+      background-color: #fff; /* Adjust the background color */
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .options-panel form {
+      width: 100%;
+    }
+    .options-panel input[type="submit"] {
+      width: calc(100% - 4px);
+      /* Adjust submit button width */
+      margin-top: 10px;
+    }
+
+    .panel {
+      position: relative;
+      /* left: 20px;
+            top: 52%; */
+      /* transform: translateY(-50%);
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-height: 80%;
+            overflow-y: auto;
+            z-index: 2; */
+    }
+
+    .button {
+      display: inline-block;
+      background-color: #ffea00;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+      text-align: center;
+    }
+
+    .button:hover {
+      background-color: #615902;
+    }
+
+    #goBackButton {
+      position: fixed;
+      top: 10px;
+      left: 20px;
+      background-color: #ff00ff;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      z-index: 9999;
+    }
+
+    #goBackButton:hover {
+      background-color: #b30071;
+    }
+
+    .file-input-container {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+    }
+
+    .file-input-container input[type="file"] {
+      position: absolute;
+      font-size: 100px;
+      opacity: 0;
+      right: 0;
+      top: 0;
+    }
+
+    .range-container label {
+      display: block;
+      margin-bottom: 2px;
+      margin-top: 10px;
+      font-weight: bold;
+      font-size: 16px;
+      color: #333;
+    }
+
+    /* .range-container input[type="number"] {
+      width: 100px;
+      padding: 8px;
+      margin-bottom: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 14px;
+    } */
+
+    #clipButton {
+      margin-right: 10px;
+      margin-top: 10px;
+      background-color: #28a745;
+      color: #fff;
+    }
+
+    #clipButton:hover {
+      background-color: #218838;
+    }
+
+    #captureImageButton {
+      margin-left: 0px;
+      margin-bottom: 10px;
+      background-color: #dc3545;
+      color: #fff;
+    }
+
+    #captureImageButton:hover {
+      background-color: #c82333;
+    }
+
+    .range-container {
+      margin-bottom: 10px;
+    }
+
+    .range-container label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .range-container input[type="range"] {
+      width: calc(100% - 40px);
+    }
+
+    .range-container output {
+      display: inline-block;
+      width: 40px;
+      margin-left: 10px;
+    }
+
+    .selection {
+      position: absolute;
+      top: 0; /* Adjust as needed */
+      left: 0; /* Adjust as needed */
+      width: 100px; /* Adjust as needed */
+      height: 100px; /* Adjust as needed */
+      border: 2px dashed red;
+      pointer-events: none;
+      z-index: 9999; /* Ensure it's above other content */
+      display: none; /* Ensure it's visible */
+    }
+
+    .frame-container {
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .frame-container label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .frame-container select {
+      width: calc(50% - 5px);
+      padding: 5px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    .coordinate-container {
+      margin-top: 10px;
+    }
+  </style>
+
+  <body>
+    <script>
+      window.client_api = "<%= client_api %>";
+      window.server_api = "<%= server_api %>";
+      // const client_api = window.client_api;
+      const server_api = window.server_api;
+    </script>
+    <div class="cam overflow-hidden text-red-900 flex gap-x-2 items-start p-4">
+      <div class="w-full h-full">
+        <div class="flex items-center gap-x-10 py-4">
+          <div class="flex gap-x-2">
+            <button
+              id="uploadBtn"
+              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+            >
+              Browse
+            </button>
+            <!-- <button id="snap" onclick="captureImage()"
+class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full">Capture</button> -->
+            <button
+              id="snap"
+              onclick="captureImage()"
+              class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full"
+            >
+              Capture
+            </button>
+          </div>
+
+          <div>
+            <form
+              action="/process_image"
+              method="post"
+              enctype="multipart/form-data"
+              name="addroom"
+            >
+              <div class="flex items-center gap-x-2">
+                <input
+                  type="file"
+                  name="file"
+                  id="fileInput"
+                  class="hidden"
+                  required
+                />
+                <label for="Norm">Total:</label>
+                <input
+                  type="number"
+                  class="capture"
+                  id="total"
+                  name="total"
+                  placeholder="Enter total Sperm Count"
+                />
+
+                <label for="Tapered">Live:</label>
+                <input
+                  type="number"
+                  class="capture"
+                  id="live"
+                  name="live"
+                  placeholder="Enter live Sperm Count"
+                />
+
+                <label for="Pyriform">Dead:</label>
+                <input
+                  type="number"
+                  class="capture"
+                  id="dead"
+                  name="dead"
+                  placeholder="Enter dead Sperm Count"
+                />
+
+                <input
+                  type="submit"
+                  class="bg-red-500 rounded-full px-6 py-2 text-white mx-8"
+                  name="submit"
+                />
+              </div>
+            </form>
+          </div>
+        </div>
+        <img id="imgSperm" class="w-full" src="" />
+
+        <!-- <img id="imgSperm" class="img-sperm w-full" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSlGArSue-SnOQjyKa6z1hfD7Kcf5LvSYhKPg&s"></img> -->
+
+        <div id="selection" class="selection"></div>
+      </div>
+
+      <div class="panel w-1/5 py-10 p-4 border shadow-lg">
+        <div class="flex">
+          <div>
+            <div class="range-container">
+              <label for="brightnessRange">Brightness:</label>
+              <input
+                type="range"
+                id="brightnessRange"
+                min="0"
+                max="2"
+                step="0.1"
+                value="1"
+              />
+            </div>
+            <div class="range-container">
+              <label for="contrastRange">Contrast:</label>
+              <input
+                type="range"
+                id="contrastRange"
+                min="0"
+                max="2"
+                step="0.1"
+                value="1"
+              />
+            </div>
+            <div class="range-container">
+              <label for="saturationRange">Saturation:</label>
+              <input
+                type="range"
+                id="saturationRange"
+                min="0"
+                max="2"
+                step="0.1"
+                value="1"
+              />
+            </div>
+            <div class="range-container">
+              <label for="temperatureRange">Temperature:</label>
+              <input
+                type="range"
+                id="temperatureRange"
+                min="0"
+                max="2"
+                step="0.1"
+                value="1"
+              />
+            </div>
+            <div class="range-container">
+              <label for="gainRange">Gain:</label>
+              <input
+                type="range"
+                id="gainRange"
+                min="0"
+                max="2"
+                step="0.1"
+                value="1"
+              />
+            </div>
+            <div class="range-container">
+              <label for="alphaRange">Alpha:</label>
+              <input
+                type="range"
+                id="alphaRange"
+                min="0"
+                max="1"
+                step="0.1"
+                value="1"
+              />
+            </div>
+            <div class="range-container">
+              <label for="whiteBalanceRange">White Balance:</label>
+              <input type="range" id="whiteBalanceRange" min="0.5" max="7" step="0.01" value="0" />
+
+            </div>
+            <div class="range-container">
+              <label for="tintRange">Tint:</label>
+              <input
+                type="range"
+                id="tintRange"
+                min="0"
+                max="360"
+                step="1"
+                value="0"
+              />
+            </div>
+            <div class="range-container">
+              <label for="fpsRange">FPS:</label>
+              <input
+                type="range"
+                id="fpsRange"
+                min="1"
+                max="60"
+                step="1"
+                value="30"
+              />
+              <span id="fpsValue">30</span> FPS
+            </div>
+          </div>
+
+          <div>
+            <div class="frame-container">
+              <label>Frame:</label>
+              <select id="frameSelect">
+                <option value="none">None</option>
+                <option value="dashed">Dashed</option>
+                <option value="dotted">Dotted</option>
+              </select>
+              <div>
+                <label for="frameWidth">Width:</label>
+                <input type="number" id="frameWidth" value="0" />
+              </div>
+              <div>
+                <label for="frameHeight">Height:</label>
+                <input type="number" id="frameHeight" value="0" />
+              </div>
+              <div class="coordinate-container">
+                <label for="frameX">X:</label>
+                <input type="number" id="frameX" value="0" />
+                <label for="frameY">Y:</label>
+                <input type="number" id="frameY" value="0" />
+              </div>
+            </div>
+            <div class="range-container">
+              <label for="startTime">Start Time (seconds):</label>
+              <input type="number" id="startTime" min="0" value="0" />
+            </div>
+            <div class="range-container">
+              <label for="endTime">End Time (seconds):</label>
+              <input type="number" id="endTime" min="0" value="10" />
+            </div>
+          </div>
+        </div>
+        <button id="clipButton" class="button">Clip Video</button>
+        <button id="captureImageButton" class="button">Capture Image</button>
+      </div>
+    </div>
+
+    <!-- <div class="side ">
+      <video width="320" height="240" autoplay id="video" controls>
+        <source
+          src="{{ url_for('static', filename='WhatsApp_Video_2024-05-13_at_3.37.03_PM.mp4') }}"
+          type="video/mp4"
+        />
+        Your browser does not support the video tag.
+      </video>
+    </div> -->
+    <canvas id="canvas" style="display: block"></canvas>
+
+    <!-- <canvas id="canvas" width="640" height="480" hidden></canvas>  -->
+    <script>
+      "use strict";
+
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const snap = document.getElementById("snap");
+      const fileInput = document.getElementById("fileInput");
+      const imgSperm = document.getElementById("imgSperm");
+
+      const constraints = {
+        audio: true,
+        video: {
+          width: 1280,
+          height: 720,
+        },
+      };
+
+      // Access webcam
+      async function init() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          handleSuccess(stream);
+        } catch (e) {
+          errorMsgElement.innerHTML = `navigator.getUserMedia error:${e.toString()}`;
+        }
+      }
+
+      // Success
+      function handleSuccess(stream) {
+        window.stream = stream;
+        video.srcObject = stream;
+      }
+
+      // Load init
+      // init();
+
+      // Draw image
+      var context = canvas.getContext("2d");
+    </script>
+    <script>
+      const uploadBtn = document.getElementById("uploadBtn");
+      let socket = null;
+      document
+        .getElementById("fileInput")
+        .addEventListener("change", (event) => {
+          const file = event.target.files[0];
+
+          if (file) {
+            updateImage(file);
+
+            if (socket) {
+              socket.disconnect(); // Disconnect the socket if it's open
+              socket = null;
+              // detectCameraBtn.textContent = "Detect Camera"; // Reset button text
+            }
+          }
+        });
+      document.getElementById("uploadBtn").addEventListener("click", () => {
+        document.getElementById("fileInput").click();
+      });
+
+
+      function captureImage() {
+      
+        const imgElement = document.getElementById("imgSperm");
+        const capturedImgSrc =captureFrameFromImageElement(imgElement);
+        fetch(capturedImgSrc)
+          .then((response) => response.blob())
+          .then((blob) => {
+            const formData = new FormData();
+            formData.append("image", blob);
+            fetch(`${server_api}/process_image_vitality`, {
+              method: "POST",
+              body: formData,
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (socket) {
+                  socket.disconnect();
+                  socket = null;
+                  window.pauseSocket=true;
+                }
+                console.log("vitality_Data", data);
+                const imgElement = document.getElementById("imgSperm");
+                imgElement.src = data.imageData;
+                document.getElementById("total").value =
+                  data.living_count + data.dead_count;
+                document.getElementById("live").value = data.living_count;
+                document.getElementById("dead").value = data.dead_count;
+
+                // Change code here
+                fetch(imgElement.src)
+                  .then((response) => response.blob())
+                  .then((blob) => {
+                    const formData = new FormData();
+                    formData.append("image", blob, "capture.png");
+                    // More fields can be added similarly
+                    //   fetch(`${server_api}/upload-image", {
+                    //     method: "POST",
+                    //     body: formData,
+                    //   })
+                    //     .then((response) => response.json())
+                    //     .then((data) => console.log("Success:", data))
+                    //     .catch((error) => console.error("Error:", error));
+                  })
+                  .catch((error) => {
+                    console.error("Error fetching image:", error);
+                  });
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+              });
+          })
+          .catch((error) => {
+            console.error("Error fetching image:", error);
+          });
+      }
+
+      function updateImage(file) {
+        const imgElement = document.getElementById("imgSperm");
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          imgElement.src = e.target.result;
+          // Clear the previously displayed counts when a new image is loaded
+          document.getElementById("total").value = "";
+          document.getElementById("dead").value = "";
+          document.getElementById("live").value = "";
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // new filter added code below
+
+      //Filter input code below
+
+      function toggleCanvasDisplay(showCanvas) {
+        const canvas = document.getElementById("canvas");
+        canvas.style.display = showCanvas ? "block" : "none";
+      }
+
+      const videoElement = document.getElementById("imgSperm");
+      const brightnessRange = document.getElementById("brightnessRange");
+      const contrastRange = document.getElementById("contrastRange");
+      const saturationRange = document.getElementById("saturationRange");
+      const temperatureRange = document.getElementById("temperatureRange");
+      const gainRange = document.getElementById("gainRange");
+      const alphaRange = document.getElementById("alphaRange");
+      const tintRange = document.getElementById("tintRange");
+      const selection = document.getElementById("selection");
+      const frameSelect = document.getElementById("frameSelect");
+      const frameX = document.getElementById("frameX");
+      const frameY = document.getElementById("frameY");
+      // const canvas = document.getElementById('canvas');
+
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+      const ctx = canvas.getContext("2d");
+
+      // document.getElementById('upload').addEventListener('change', function(event) {
+      //     const file = event.target.files[0];
+      //     const url = URL.createObjectURL(file);
+      //     videoElement.src = url;
+      // });
+
+      const fpsRange = document.getElementById("fpsRange");
+      const fpsValue = document.getElementById("fpsValue");
+
+      fpsRange.addEventListener("input", function () {
+        fpsValue.textContent = this.value;
+        videoElement.playbackRate = this.value / 30;
+      });
+
+      function applyFiltersToVideoElement() {
+        const brightnessValue = parseFloat(brightnessRange.value);
+        const contrastValue = parseFloat(contrastRange.value);
+        const saturationValue = parseFloat(saturationRange.value);
+        const alphaValue = parseFloat(alphaRange.value);
+        const tintValue = parseFloat(tintRange.value);
+        const temperatureValue = parseFloat(temperatureRange.value);
+        const gainValue = parseFloat(gainRange.value);
+
+        videoElement.style.filter = `brightness(${brightnessValue}) contrast(${contrastValue}) saturate(${saturationValue}) hue-rotate(${
+          (temperatureValue - 1) * 180
+        }deg) opacity(${alphaValue}) hue-rotate(${tintValue}deg)`;
+        videoElement.style.opacity = gainValue;
+      }
+
+      function applyFiltersToContext(context, canvas) {
+        const brightnessValue = parseFloat(brightnessRange.value);
+        const contrastValue = parseFloat(contrastRange.value);
+        const saturationValue = parseFloat(saturationRange.value);
+        const alphaValue = parseFloat(alphaRange.value);
+        const tintValue = parseFloat(tintRange.value);
+        const temperatureValue = parseFloat(temperatureRange.value);
+        const gainValue = parseFloat(gainRange.value);
+
+        context.filter = `brightness(${brightnessValue}) contrast(${contrastValue}) saturate(${saturationValue}) hue-rotate(${
+          (temperatureValue - 1) * 180
+        }deg) opacity(${alphaValue}) hue-rotate(${tintValue}deg)`;
+        context.globalAlpha = gainValue;
+
+        // Apply filters to the drawn image
+        context.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+      }
+
+      // Call this function to apply filters to the video element for live preview
+      function updateLivePreview() {
+        applyFiltersToVideoElement();
+      }
+      
+        // Add event listeners to filter range inputs to update the live preview in real-time
+        brightnessRange.addEventListener('input', updateLivePreview);
+        contrastRange.addEventListener('input', updateLivePreview);
+        saturationRange.addEventListener('input', updateLivePreview);
+        alphaRange.addEventListener('input', updateLivePreview);
+        tintRange.addEventListener('input', updateLivePreview);
+        temperatureRange.addEventListener('input', updateLivePreview);
+        gainRange.addEventListener('input', updateLivePreview);
+      // Initial call to apply filters when the page loads
+      window.onload = updateLivePreview();
+
+
+      function captureFrameFromImageElement(imgElement) {
+        var canvas = document.createElement("canvas");
+        var context = canvas.getContext("2d");
+        canvas.width = imgElement.width;
+        canvas.height = imgElement.height;
+        context.drawImage(
+          imgElement,
+          0,
+          0,
+          imgElement.width,
+          imgElement.height
+        );
+
+        // Apply filters to context
+        applyFiltersToContext(context, canvas);
+
+      return canvas.toDataURL("image/jpeg")
+      }
+
+      document
+        .getElementById("frameWidth")
+        .addEventListener("input", function () {
+          const width = this.value;
+          selection.style.width = `${width}px`;
+          selection.style.display = "block";
+        });
+
+      document
+        .getElementById("frameHeight")
+        .addEventListener("input", function () {
+          const height = this.value;
+          selection.style.height = `${height}px`;
+          selection.style.display = "block";
+        });
+
+      frameSelect.addEventListener("change", function () {
+        const frameStyle = this.value;
+        selection.style.borderStyle = frameStyle;
+        selection.style.display = frameStyle === "none" ? "none" : "block";
+      });
+
+      frameX.addEventListener("input", function () {
+        const x = this.value;
+        selection.style.left = `${x}px`;
+      });
+
+      frameY.addEventListener("input", function () {
+        const y = this.value;
+        selection.style.top = `${y}px`;
+      });
+
+      document
+        .getElementById("captureImageButton")
+        .addEventListener("click", function () {
+          const frameWidth = parseInt(
+            document.getElementById("frameWidth").value
+          );
+          const frameHeight = parseInt(
+            document.getElementById("frameHeight").value
+          );
+
+          const frameX = parseInt(document.getElementById("frameX").value);
+          const frameY = parseInt(document.getElementById("frameY").value);
+
+          const canvas = document.getElementById("canvas");
+          const ctx = canvas.getContext("2d");
+          const imgElement = document.getElementById("imgSperm");
+
+          // Calculate the width and height for the canvas
+          const canvasWidth = frameWidth;
+          const canvasHeight = frameHeight;
+
+          canvas.width = canvasWidth;
+          canvas.height = canvasHeight;
+
+          // Debugging: Log dimensions and coordinates
+          console.log("Frame Coordinates:", frameX, frameY);
+          console.log("Frame Dimensions:", canvasWidth, canvasHeight);
+
+          // Ensure the image is fully loaded before drawing
+          imgElement.onload = function () {
+            // Apply CSS filters from the image to the canvas context
+            ctx.filter = getComputedStyle(imgElement).filter;
+
+            // Draw the selected part of the image onto the canvas
+            ctx.drawImage(
+              imgElement,
+              frameX,
+              frameY,
+              frameWidth,
+              frameHeight,
+              0,
+              0,
+              canvasWidth,
+              canvasHeight
+            );
+
+            // Debugging: Log canvas dimensions
+            console.log("Canvas Dimensions:", canvas.width, canvas.height);
+            console.log("ctx", ctx);
+
+            // Frame style
+            const frameStyle = document.getElementById("frameSelect").value;
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([]);
+
+            if (frameStyle === "dashed") {
+              ctx.setLineDash([5, 5]);
+            } else if (frameStyle === "dotted") {
+              ctx.setLineDash([2, 2]);
+            }
+
+            // Draw the rectangle frame
+            ctx.strokeRect(0, 0, canvasWidth, canvasHeight);
+
+            // Convert the canvas to a data URL and download the image
+            const imageDataURL = canvas.toDataURL("image/png");
+            const downloadLink = document.createElement("a");
+            downloadLink.href = imageDataURL;
+            downloadLink.download = "filtered_image.png";
+            downloadLink.click();
+          };
+
+          // If the image is already loaded, trigger the onload event manually
+          // if (imgElement.complete) {
+          imgElement.onload();
+          // }
+        });
+
+      //     document.getElementById('goBackButton').addEventListener('click', function() {
+      // window.history.back();
+      // });
+
+      document.addEventListener("DOMContentLoaded", function () {
+        // Your JavaScript code here
+        const selectionElement = document.querySelector(".selection");
+        if (selectionElement) {
+          selectionElement.style.display = "none";
+        } else {
+          console.error("Element with class 'selection' not found.");
+        }
+      });
+
+      const rect = document.getElementById("imgSperm").getBoundingClientRect();
+
+      const x = rect.left + window.scrollX;
+      const y = rect.top + window.scrollY;
+
+      console.log(x, y);
+
+      document.getElementById("frameX").value = x;
+      document.getElementById("frameY").value = y;
+      console.log(document.getElementById("frameX").value);
+    </script>
+
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"
+      integrity="sha512-JjFeUD2H//RHt+DjVf1BTuy1X5ZPtMl0svQ3RopX641DWoSilJ89LsFGq4Sw/6BSBfULqUW/CfnVopV5CfvRXA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script src="/tests/savefilter.js"></script>
+    <script src="/tests/cameradetection.js"></script>
+  </body>
+</html>
